@@ -1,13 +1,25 @@
 import streamlit as st
-import audiorecorder
+import sounddevice as sd
+import numpy as np
 import speech_recognition as sr
 import pyttsx3
+import io
 
-def speech_to_text(audio_file):
+def record_audio(duration=5, fs=44100):
+    st.write("Recording...")
+    recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
+    sd.wait()  # Wait until the recording is finished
+    st.write("Recording finished")
+    return recording
+
+def speech_to_text(recording):
     recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_file) as source:
-        audio_data = recognizer.record(source)
+    with io.BytesIO(recording.tobytes()) as audio_buffer:
+        audio_buffer.seek(0)
         try:
+            audio = sr.AudioFile(audio_buffer)
+            with audio as source:
+                audio_data = recognizer.record(source)
             text = recognizer.recognize_google(audio_data)
             return text
         except sr.UnknownValueError:
@@ -23,9 +35,9 @@ def text_to_speech(text):
 st.title("Text-to-Speech and Speech-to-Text App")
 
 st.header("Speech-to-Text")
-audio_file = audiorecorder.audio_input("Record your audio:")
-if audio_file:
-    result = speech_to_text(audio_file)
+if st.button("Convert Speech to Text"):
+    recording = record_audio()
+    result = speech_to_text(recording)
     st.write(result)
 
 st.header("Text-to-Speech")
