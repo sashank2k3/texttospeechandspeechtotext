@@ -1,14 +1,28 @@
 import streamlit as st
+import sounddevice as sd
+import numpy as np
 import speech_recognition as sr
 import pyttsx3
+import io
+
+def record_audio(duration=5, fs=44100):
+    st.write("Recording...")
+    recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
+    sd.wait()  # Wait until the recording is finished
+    st.write("Recording finished")
+    return recording
 
 def speech_to_text():
     recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.write("Say something...")
-        audio = recognizer.listen(source)
+    with io.BytesIO() as audio_buffer:
+        recording = record_audio()
+        audio_buffer.write(recording.tobytes())
+        audio_buffer.seek(0)
         try:
-            text = recognizer.recognize_google(audio)
+            audio = sr.AudioFile(audio_buffer)
+            with audio as source:
+                audio_data = recognizer.record(source)
+            text = recognizer.recognize_google(audio_data)
             return text
         except sr.UnknownValueError:
             return "Google Speech Recognition could not understand audio"
