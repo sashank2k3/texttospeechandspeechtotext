@@ -1,3 +1,4 @@
-pip install streamlit
-pip install SpeechRecognition
-pip install pyttsx3
+streamlit
+speechrecognition
+pyttsx3
+pyaudio
